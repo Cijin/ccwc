@@ -1,19 +1,20 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"os"
 	"strings"
+	"unicode/utf8"
 )
 
-var byteCount, lineCount, wordCount bool
+var byteCount, lineCount, wordCount, charCount bool
 
 func init() {
-	flag.BoolVar(&byteCount, "c", false, "get character count")
-	flag.BoolVar(&lineCount, "l", false, "get character count")
-	flag.BoolVar(&wordCount, "w", false, "get character count")
+	flag.BoolVar(&byteCount, "c", false, "get number of bytes in file")
+	flag.BoolVar(&lineCount, "l", false, "get line count")
+	flag.BoolVar(&wordCount, "w", false, "get word count")
+	flag.BoolVar(&charCount, "m", false, "get character count")
 }
 
 func main() {
@@ -49,58 +50,55 @@ func main() {
 
 		fmt.Println(count, fileName)
 	}
+
+	if charCount {
+		count, err := getCharCount(fileName)
+		if err != nil {
+			fmt.Println(err, fileName)
+			return
+		}
+
+		fmt.Println(count, fileName)
+	}
 }
 
 func getByteCount(fileName string) (int, error) {
-	info, err := os.Stat(fileName)
+	data, err := os.ReadFile(fileName)
 	if err != nil {
 		return -1, err
 	}
 
-	return int(info.Size()), nil
+	return len(data), nil
 }
 
 func getLineCount(fileName string) (int, error) {
-	file, err := os.Open(fileName)
+	data, err := os.ReadFile(fileName)
 	if err != nil {
 		return -1, err
 	}
 
-	defer file.Close()
+	lines := strings.Split(string(data), "\n")
 
-	var count int
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		count += 1
-	}
-
-	if err := scanner.Err(); err != nil {
-		return -1, err
-	}
-
-	return count, nil
+	// ignore the string after the last line split (empty), hence -1
+	return len(lines) - 1, nil
 }
 
 func getWordCount(fileName string) (int, error) {
-	file, err := os.Open(fileName)
+	data, err := os.ReadFile(fileName)
 	if err != nil {
 		return -1, err
 	}
 
-	defer file.Close()
+	fields := strings.Fields(string(data))
 
-	var count int
-	scanner := bufio.NewScanner(file)
+	return len(fields), nil
+}
 
-	for scanner.Scan() {
-		words := strings.Split(scanner.Text(), " ")
-		count += len(words)
-	}
-
-	if err := scanner.Err(); err != nil {
+func getCharCount(fileName string) (int, error) {
+	data, err := os.ReadFile(fileName)
+	if err != nil {
 		return -1, err
 	}
 
-	return count, nil
+	return utf8.RuneCount(data), nil
 }
