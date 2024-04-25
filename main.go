@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 	"unicode/utf8"
 )
 
@@ -77,9 +77,8 @@ func getLineCount(fileName string) (int, error) {
 		return -1, err
 	}
 
-	lines := strings.Split(string(data), "\n")
-
-	// ignore the string after the last line split (empty), hence -1
+	lines := bytes.Split(data, []byte("\n"))
+	// ignore the last line split (empty), hence -1
 	return len(lines) - 1, nil
 }
 
@@ -89,8 +88,7 @@ func getWordCount(fileName string) (int, error) {
 		return -1, err
 	}
 
-	fields := strings.Fields(string(data))
-
+	fields := bytes.Fields(data)
 	return len(fields), nil
 }
 
